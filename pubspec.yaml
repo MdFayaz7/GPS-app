@@ -1,0 +1,29 @@
+name: gps_camera
+description: GPS Camera - geotag photos with live GPS or a custom location (Android).
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  camera: ^0.11.1          # CameraX preview + capture
+  flutter_map: ^8.1.1      # OpenStreetMap picker (no API key)
+  gal: ^2.3.0              # save to Gallery album
+  geocoding: ^4.0.0        # address <-> coordinates (Android Geocoder, free)
+  geolocator: ^14.0.0      # GPS stream
+  http: ^1.2.2             # mini-map tiles
+  intl: ^0.20.2            # date formatting
+  latlong2: ^0.9.1
+  share_plus: ^11.0.0
+  shared_preferences: ^2.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

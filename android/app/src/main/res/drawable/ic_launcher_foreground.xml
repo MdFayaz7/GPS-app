@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Camera with a location pin inside the lens. 108dp canvas, art kept in the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- top bump -->
+    <path android:fillColor="#FFFFFF" android:pathData="M45,40 L48.5,34.5 H59.5 L63,40 Z" />
+    <!-- body -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M37,39 H71 A7,7 0 0 1 78,46 V67 A7,7 0 0 1 71,74 H37 A7,7 0 0 1 30,67 V46 A7,7 0 0 1 37,39 Z" />
+    <!-- lens -->
+    <path android:fillColor="#28328C"
+        android:pathData="M54,43.5 A13,13 0 1 1 54,69.5 A13,13 0 1 1 54,43.5 Z" />
+    <!-- pin -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M54,48.5 C50.4,48.5 47.5,51.4 47.5,55 C47.5,59.8 54,65.5 54,65.5 C54,65.5 60.5,59.8 60.5,55 C60.5,51.4 57.6,48.5 54,48.5 Z" />
+    <path android:fillColor="#28328C"
+        android:pathData="M54,52.6 A2.4,2.4 0 1 1 54,57.4 A2.4,2.4 0 1 1 54,52.6 Z" />
+    <!-- flash dot -->
+    <path android:fillColor="#14BEF0"
+        android:pathData="M71,43.5 A2,2 0 1 1 71,47.5 A2,2 0 1 1 71,43.5 Z" />
+</vector>

@@ -28,14 +28,17 @@ class _MiniMapState extends State<MiniMap> {
   late TileWindow _w;
   List<Uint8List?> _tiles = List.filled(_n * _n, null);
 
+
   TileWindow _window() => MapTiles.window(widget.lat, widget.lng,
       z: MapTiles.zoomFor(widget.style));
+
+  int _gen = 0; // bumps whenever the tile set changes; stale loads drop out
 
   @override
   void initState() {
     super.initState();
     _w = _window();
-    _load(_w, widget.style);
+    _load();
   }
 
   @override
@@ -49,20 +52,46 @@ class _MiniMapState extends State<MiniMap> {
     final w = _window();
     final changed = !w.sameTiles(_w) || old.style != widget.style;
     _w = w;
-    if (changed) {
-      _tiles = List.filled(_n * _n, null);
-      _load(w, widget.style);
+    if (changed) _load();
+  }
+
+  /// Shows each tile the moment it arrives (cached tiles instantly, centre
+  /// tile first) and keeps retrying failed tiles until they load, so the map
+  /// never stays blank after a slow or failed first request.
+  void _load() {
+    final gen = ++_gen;
+    final w = _w, style = widget.style;
+    final next = List<Uint8List?>.filled(_n * _n, null);
+    // Synchronous cache pass: no blank frame when the tiles are already here.
+    for (var j = 0; j < _n; j++) {
+      for (var i = 0; i < _n; i++) {
+        next[j * _n + i] = MapTiles.cached(style, w.z, w.x0 + i, w.y0 + j);
+      }
+    }
+    _tiles = next;
+    if (mounted) setState(() {});
+    // Centre tile first, then the ring around it.
+    const order = [4, 1, 3, 5, 7, 0, 2, 6, 8];
+    for (final k in order) {
+      if (next[k] == null) _fetch(gen, w, style, k);
     }
   }
 
-  Future<void> _load(TileWindow w, MapStyle style) async {
-    final tiles = await Future.wait([
-      for (var j = 0; j < _n; j++)
-        for (var i = 0; i < _n; i++)
-          MapTiles.tile(style, w.z, w.x0 + i, w.y0 + j),
-    ]);
-    if (mounted && w.sameTiles(_w) && style == widget.style) {
-      setState(() => _tiles = tiles);
+  Future<void> _fetch(int gen, TileWindow w, MapStyle style, int k) async {
+    final y = w.y0 + k ~/ _n;
+    if (y < 0 || y >= 1 << w.z) return; // beyond the poles: no tile exists
+    for (var attempt = 0;; attempt++) {
+      final bytes =
+          await MapTiles.tile(style, w.z, w.x0 + k % _n, w.y0 + k ~/ _n);
+      if (!mounted || gen != _gen) return;
+      if (bytes != null) {
+        setState(() => _tiles[k] = bytes);
+        return;
+      }
+      // Offline / slow network: back off 1s, 2s, 4s … max 15s.
+      await Future<void>.delayed(
+          Duration(seconds: attempt < 4 ? 1 << attempt : 15));
+      if (!mounted || gen != _gen) return;
     }
   }
 

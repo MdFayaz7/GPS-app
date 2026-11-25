@@ -173,6 +173,7 @@ class AppState extends ChangeNotifier {
     _live = (_live ??
             Place(lat: p.latitude, lng: p.longitude, title: ''))
         ._moved(p.latitude, p.longitude);
+    MapTiles.prefetch(p.latitude, p.longitude, mapStyle);
     notifyListeners();
 
     // Reverse-geocode only when we moved > 25 m: saves network & battery.
@@ -247,6 +248,7 @@ class AppState extends ChangeNotifier {
   }
 
   void setCustom(Place p) {
+    MapTiles.prefetch(p.lat, p.lng, mapStyle);
     _custom = p;
     _mode = LocationMode.custom;
     _recents = [p, ..._recents.where((r) => !r.sameSpot(p))].take(6).toList();

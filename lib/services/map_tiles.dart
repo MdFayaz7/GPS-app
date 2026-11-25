@@ -48,11 +48,34 @@ class MapTiles {
           'World_Imagery/MapServer/tile/$z/$y/$x')
       : Uri.parse('https://tile.openstreetmap.org/$z/$x/$y.png');
 
-  static Future<Uint8List?> tile(MapStyle s, int z, int x, int y) {
+  static String? _key(MapStyle s, int z, int x, int y) {
     final n = 1 << z;
-    if (y < 0 || y >= n) return Future.value(null);
+    if (y < 0 || y >= n) return null;
+    return '${s.name}/$z/${((x % n) + n) % n}/$y';
+  }
+
+  /// Tile bytes if already in memory, else null. Never touches the network.
+  static Uint8List? cached(MapStyle s, int z, int x, int y) {
+    final key = _key(s, z, x, y);
+    return key == null ? null : _cache[key];
+  }
+
+  /// Starts downloading the 3x3 block around a point so the stamp map is
+  /// ready by the time it is shown (e.g. while the picker is still closing).
+  static void prefetch(double lat, double lng, MapStyle s) {
+    final w = window(lat, lng, z: zoomFor(s));
+    for (var j = 0; j < TileWindow.span; j++) {
+      for (var i = 0; i < TileWindow.span; i++) {
+        tile(s, w.z, w.x0 + i, w.y0 + j);
+      }
+    }
+  }
+
+  static Future<Uint8List?> tile(MapStyle s, int z, int x, int y) {
+    final key = _key(s, z, x, y);
+    if (key == null) return Future.value(null);
+    final n = 1 << z;
     x = ((x % n) + n) % n;
-    final key = '${s.name}/$z/$x/$y';
     final hit = _cache.remove(key);
     if (hit != null) return Future.value(_cache[key] = hit); // bump LRU
     return _pending[key] ??= _fetch(key, _url(s, z, x, y))
@@ -63,7 +86,7 @@ class MapTiles {
     try {
       final r = await _client.get(url, headers: const {
         'User-Agent': userAgent
-      }).timeout(const Duration(seconds: 8));
+      }).timeout(const Duration(seconds: 6));
       if (r.statusCode != 200) return null;
       if (_cache.length >= _maxCached) _cache.remove(_cache.keys.first);
       return _cache[key] = r.bodyBytes;

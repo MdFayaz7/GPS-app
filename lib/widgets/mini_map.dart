@@ -69,7 +69,7 @@ class _MiniMapState extends State<MiniMap> {
       }
     }
     _tiles = next;
-    if (mounted) setState(() {});
+    // No setState: called from initState/didUpdateWidget, which rebuild anyway.
     // Centre tile first, then the ring around it.
     const order = [4, 1, 3, 5, 7, 0, 2, 6, 8];
     for (final k in order) {

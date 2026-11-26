@@ -78,8 +78,12 @@ class MapTiles {
     x = ((x % n) + n) % n;
     final hit = _cache.remove(key);
     if (hit != null) return Future.value(_cache[key] = hit); // bump LRU
-    return _pending[key] ??= _fetch(key, _url(s, z, x, y))
-        .whenComplete(() => _pending.remove(key));
+    // Block body on purpose: an arrow returning the removed Future would make
+    // whenComplete wait on itself and the request would never complete.
+    return _pending[key] ??=
+        _fetch(key, _url(s, z, x, y)).whenComplete(() {
+      _pending.remove(key);
+    });
   }
 
   static Future<Uint8List?> _fetch(String key, Uri url) async {
